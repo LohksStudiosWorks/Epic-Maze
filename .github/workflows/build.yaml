@@ -37,7 +37,16 @@ jobs:
           compiler: ${{ matrix.compiler }}
           shell: ${{ matrix.terminal }}
           install: false
+          upload_executable: true
           test: false
+
+      - name: Test things (temporary)
+        if: matrix.os == 'ubuntu-26.04'
+        shell: bash
+        run: |
+          ls build
+          cd build
+          ./AllegroMonolith
             
 #  release:
 #    needs: make-libs
