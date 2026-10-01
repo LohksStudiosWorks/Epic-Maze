@@ -1,11 +1,7 @@
 include(FetchContent)
 
-# ---------------------------------------------------------
-# Force Allegro into a static build to create a monolith
-# ---------------------------------------------------------
 set(SHARED OFF CACHE BOOL "Build shared libraries" FORCE)
 
-# Disable unnecessary Allegro targets to speed up compilation
 set(WANT_TESTS OFF CACHE BOOL "Build tests" FORCE)
 set(WANT_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
 set(WANT_DEMOS OFF CACHE BOOL "Build demos" FORCE)
@@ -22,10 +18,6 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(allegro5)
 
-# ---------------------------------------------------------
-# Fix Allegro 5 INTERFACE_INCLUDE_DIRECTORIES for modern CMake
-# Wrap raw build/source paths in $<BUILD_INTERFACE:...>
-# ---------------------------------------------------------
 function(fix_allegro_interface_includes target_name)
     if(TARGET ${target_name})
         get_target_property(inc_dirs ${target_name} INTERFACE_INCLUDE_DIRECTORIES)
@@ -38,7 +30,6 @@ function(fix_allegro_interface_includes target_name)
     endif()
 endfunction()
 
-# Sanitize core targets and addons
 set(ALLEGRO_TARGETS_TO_FIX
     allegro
     allegro_main
