@@ -3,6 +3,9 @@ name: Build Project
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   make-libs:
     name: Building and deploying on ${{ matrix.os }} - ${{ matrix.compiler }}
@@ -28,6 +31,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+
+      - name: Setup Allegro 5 Deps
+        uses: LunarisLib/actions/InstallAllegroDeps5@revamp
+        with:
+          compiler: ${{ matrix.compiler }}
 
       - name: Build & Test
         uses: LunarisLib/actions/Build@revamp
