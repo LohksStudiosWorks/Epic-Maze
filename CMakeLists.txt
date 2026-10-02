@@ -6,9 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(cmake/installAllegro.cmake)
-include(cmake/MinGWFix.cmake)
 
 add_executable(${PROJECT_NAME} src/main.cpp)
+
+include(cmake/MinGWFix.cmake)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE ALLEGRO_STATICLINK)
 
