@@ -7,7 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(cmake/installAllegro.cmake)
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME} WIN32 src/main.cpp)
 
 include(cmake/MinGWFix.cmake)
 
