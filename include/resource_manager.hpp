@@ -18,6 +18,7 @@ public:
     enum class TextureId {
         BLOCK_END,
         BLOCK,
+        DIRT,
         ICON,
         INSTR,
         INTRO,

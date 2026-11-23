@@ -30,6 +30,7 @@ std::unordered_map<ResourceManager::TextureId, const_mem_resource<SDL_Texture>> 
 
     texmap[ResourceManager::TextureId::BLOCK_END] = load_texture_from_mem(renderer, b::embed<"resources/block_end.png">());
     texmap[ResourceManager::TextureId::BLOCK] = load_texture_from_mem(renderer, b::embed<"resources/block.png">());
+    texmap[ResourceManager::TextureId::DIRT] = load_texture_from_mem(renderer, b::embed<"resources/dirt.png">());
     texmap[ResourceManager::TextureId::ICON] = load_texture_from_mem(renderer, b::embed<"resources/icon.png">());
     texmap[ResourceManager::TextureId::INSTR] = load_texture_from_mem(renderer, b::embed<"resources/instr.png">());
     texmap[ResourceManager::TextureId::INTRO] = load_texture_from_mem(renderer, b::embed<"resources/intro.png">());

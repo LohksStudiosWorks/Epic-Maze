@@ -40,6 +40,16 @@ SDL_FPoint Camera::transl(const SDL_FPoint& p) const {
     };
 }
 
+SDL_FPoint Camera::get_offset() const {
+    const double prop = m_interp.get_prop();
+    const float cam_x = (1.0 - prop) * m_draw.x + prop * m_calc.x;
+    const float cam_y = (1.0 - prop) * m_draw.y + prop * m_calc.y;
+    return {
+        -cam_x,
+        -cam_y
+    };
+}
+
 void Camera::set_zoom(float zoom) {
     m_zoom = zoom;
     SDL_SetRenderScale(m_render, m_zoom, m_zoom);
@@ -51,6 +61,10 @@ void Camera::undo_zoom() {
 
 void Camera::redo_zoom() {
     SDL_SetRenderScale(m_render, m_zoom, m_zoom);
+}
+
+float Camera::get_zoom() const {
+    return m_zoom;
 }
 
 SDL_Rect Camera::calculated_limits() const {

@@ -76,6 +76,7 @@ void Game::draw() {
         
         auto* block_tex = m_res_mng.get_texture(ResourceManager::TextureId::BLOCK);
         auto* block_end_tex = m_res_mng.get_texture(ResourceManager::TextureId::BLOCK_END);
+        auto* block_dirt_tex = m_res_mng.get_texture(ResourceManager::TextureId::DIRT);
 
         const auto area = m_cam.calculated_limits();
 
@@ -89,6 +90,7 @@ void Game::draw() {
                     draw_tex_at(block_end_tex, m_cam.transl({x * block_size_fixed.x, y * block_size_fixed.y}), block_size_fixed);
                     break;
                 default:
+                    draw_tex_at(block_dirt_tex, m_cam.transl({x * block_size_fixed.x, y * block_size_fixed.y}), block_size_fixed);
                     break;
                 }
             }
@@ -101,6 +103,15 @@ void Game::draw() {
             draw_tex_at(m_res_mng.get_texture(id), m_cam.transl({m_player->draw_get_x(), m_player->draw_get_y()}), m_player->draw_get_rot(), player_size_fixed);
         } else {
             draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::PERSON), m_cam.transl({m_player->draw_get_x(), m_player->draw_get_y()}), m_player->draw_get_rot(), player_size_fixed);            
+        }
+
+        if (m_flashlight) {
+            m_cam.undo_zoom();
+
+            m_flashlight->refresh();
+            m_flashlight->draw();
+
+            m_cam.redo_zoom();
         }
     }
         break;
@@ -153,32 +164,35 @@ SDL_AppResult Game::interact(SDL_Event& event) {
         case Scene::PLAY:
             m_sel_difficulty = m_sel_item;
             m_sel_item = 0;
+            m_elapsed_time = 0;
             m_cam.reset();
-            
+            m_player = std::make_shared<Player>(50.0f, 50.0f);
+
             switch(m_sel_difficulty) {
             case 0:
-                m_map = std::make_unique<Map>(35, 22);
+                m_map = std::make_shared<Map>(35, 22);
                 m_cam.set_zoom(0.5f);
                 break;
             case 1:
-                m_map = std::make_unique<Map>(100, 35);
+                m_map = std::make_shared<Map>(100, 35);
                 m_cam.set_zoom(1.0f);
                 break;
             case 2:
-                m_map = std::make_unique<Map>(150, 80);
+                m_map = std::make_shared<Map>(150, 80);
                 m_cam.set_zoom(1.4f);
+                m_flashlight = std::make_unique<Flashlight>(m_player, m_map, m_cam, m_renderer);
                 break;
             }
 
-            m_player = std::make_unique<Player>(50.0f, 50.0f);
-            m_elapsed_time = 0;
             m_scene = Scene::GAMING;
             break;
         case Scene::PAUSE:
             switch(m_sel_item) {
-            case 1:                   
-                m_sel_item = 0; 
+            case 1:
                 m_scene = Scene::MENU;
+                m_cam.undo_zoom();
+                m_flashlight.reset();
+                m_sel_item = 0;
                 break;
             default: // case 0
                 m_sel_item = 0;
@@ -287,6 +301,7 @@ SDL_AppResult Game::interact(SDL_Event& event) {
             if (event.key.scancode == SDL_SCANCODE_ESCAPE) {
                 m_scene = Scene::PAUSE;
                 m_cam.undo_zoom();
+                m_flashlight.reset();
                 m_sel_item = 0;
             }
             break;

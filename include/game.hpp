@@ -6,6 +6,7 @@
 #include "map.hpp"
 #include "player.hpp"
 #include "camera.hpp"
+#include "flashlight.hpp"
 
 class Game {
 public:
@@ -31,13 +32,14 @@ private:
         EXIT
     };
 
-    std::unique_ptr<Map> m_map;
-    std::unique_ptr<Player> m_player;
+    std::shared_ptr<Map> m_map;
+    std::shared_ptr<Player> m_player;
+    std::unique_ptr<Flashlight> m_flashlight;
 
     SDL_Renderer* const m_renderer;
     ResourceManager& m_res_mng;
     Camera m_cam;
-    
+
     Scene m_scene = Scene::MENU;
     uint16_t m_sel_item = 0;
     uint16_t m_sel_difficulty = 0;

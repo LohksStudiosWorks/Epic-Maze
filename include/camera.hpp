@@ -14,13 +14,15 @@ public:
     void follow(const float x, const float y);
 
     SDL_FPoint transl(const SDL_FPoint& p) const;
+    SDL_FPoint get_offset() const;
 
     void set_zoom(float zoom);
     void undo_zoom();
     void redo_zoom();
+    float get_zoom() const;
 
     SDL_Rect calculated_limits() const;
-public:
+private:
     static float lazy_move(const float actual, const float desired, const float laziness);
 
     SDL_Renderer* const m_render;

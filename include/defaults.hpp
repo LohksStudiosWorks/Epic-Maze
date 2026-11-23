@@ -18,3 +18,6 @@ constexpr SDL_Point max_area_visible = {
     static_cast<int>(2.5f + c_target_app_region.x / block_size_fixed.x),
     static_cast<int>(2.5f + c_target_app_region.y / block_size_fixed.y)
 };
+
+constexpr SDL_Point c_shadows_orig_resolution = {1920, 1080};
+constexpr SDL_Point c_shadows_resolution = {48 * 8, 27 * 8};
