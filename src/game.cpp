@@ -7,7 +7,8 @@
 
 Game::Game(ResourceManager& resources, SDL_Renderer* renderer) :
     m_renderer(renderer),
-    m_res_mng(resources)
+    m_res_mng(resources),
+    m_cam(renderer)
 {}
 
 
@@ -90,7 +91,6 @@ void Game::draw() {
                 default:
                     break;
                 }
-
             }
         }
 
@@ -153,10 +153,25 @@ SDL_AppResult Game::interact(SDL_Event& event) {
         case Scene::PLAY:
             m_sel_difficulty = m_sel_item;
             m_sel_item = 0;
-            m_map = std::make_unique<Map>(100, 22);
+            m_cam.reset();
+            
+            switch(m_sel_difficulty) {
+            case 0:
+                m_map = std::make_unique<Map>(35, 22);
+                m_cam.set_zoom(0.5f);
+                break;
+            case 1:
+                m_map = std::make_unique<Map>(100, 35);
+                m_cam.set_zoom(1.0f);
+                break;
+            case 2:
+                m_map = std::make_unique<Map>(150, 80);
+                m_cam.set_zoom(1.4f);
+                break;
+            }
+
             m_player = std::make_unique<Player>(50.0f, 50.0f);
             m_elapsed_time = 0;
-            m_cam.reset();
             m_scene = Scene::GAMING;
             break;
         case Scene::PAUSE:
@@ -168,6 +183,7 @@ SDL_AppResult Game::interact(SDL_Event& event) {
             default: // case 0
                 m_sel_item = 0;
                 m_scene = Scene::GAMING;
+                m_cam.redo_zoom();
                 break;
             }
         break;
@@ -270,6 +286,7 @@ SDL_AppResult Game::interact(SDL_Event& event) {
         case SDL_EVENT_KEY_DOWN:
             if (event.key.scancode == SDL_SCANCODE_ESCAPE) {
                 m_scene = Scene::PAUSE;
+                m_cam.undo_zoom();
                 m_sel_item = 0;
             }
             break;
@@ -292,6 +309,7 @@ SDL_AppResult Game::interact(SDL_Event& event) {
                 advance_menu();
             } else if (event.key.scancode == SDL_SCANCODE_ESCAPE) {
                 m_scene = Scene::GAMING;
+                m_cam.redo_zoom();
             }
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -335,9 +353,6 @@ void Game::tick(Uint32 elapsed) {
     const int py = static_cast<int>(std::floor((m_player->get_y() + player_size_fixed.y * 0.5f) / block_size_fixed.y));
     const SDL_FRect p_rect = m_player->get_rect();
 
-    int was_hit_vert = 0;
-    int was_hit_horiz = 0;
-
     for(int x = px - 1; x <= px + 1; ++x) {
         for(int y = py - 1; y <= py + 1; ++y) {
             if (m_map->read(x, y) != Map::BlockId::SOLID)
@@ -351,15 +366,10 @@ void Game::tick(Uint32 elapsed) {
             };
 
             if (SDL_HasRectIntersectionFloat(&p_rect, &transl)) {
-                was_hit_horiz = (y - py) == 0 ? (px - x) : was_hit_horiz;
-                was_hit_vert  = (x - px) == 0 ? (py - y) : was_hit_vert;
+                m_player->cancel();
+                break;
             }
         }
-    }
-
-    if (was_hit_vert != 0 || was_hit_horiz != 0 || m_player->get_x() > 10000.0f || m_player->get_y() > 5000.0f) {
-        SDL_Log("%i %i\n", was_hit_horiz, was_hit_vert);
-        m_player->cancel(was_hit_horiz, was_hit_vert);
     }
 
     m_cam.follow(m_player->get_x(), m_player->get_y());

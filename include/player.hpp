@@ -17,7 +17,8 @@ public:
 
     float get_x() const;
     float get_y() const;
-    void cancel(int off_x, int off_y);
+    
+    void cancel();
 
     void tick();
 

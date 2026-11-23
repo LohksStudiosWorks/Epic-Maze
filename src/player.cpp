@@ -55,18 +55,17 @@ float Player::get_y() const {
     return m_desired.y;
 }
 
-void Player::cancel(int off_x, int off_y) {
+void Player::cancel() {
     const float dir_x = m_desired.x - m_draw.x;
     const float dir_y = m_desired.y - m_draw.y;
 
-    if (off_x != 0) m_accel.x = 1.0f * off_x;
-    else if (m_accel.x * dir_x >= 0.0f) m_accel.x = 0.0f;
-    if (off_y != 0) m_accel.y = 1.0f * off_y;
-    else if (m_accel.y * dir_y >= 0.0f) m_accel.y = 0.0f;
+    if (m_accel.x * dir_x >= 0.0f) m_accel.x = 0.0f;
+    if (m_accel.y * dir_y >= 0.0f) m_accel.y = 0.0f;
 
     m_desired.x = m_draw.x;
     m_desired.y = m_draw.y;
 }
+
 
 void Player::tick() {
     constexpr float momentum = 0.9f;

@@ -33,10 +33,11 @@ private:
 
     std::unique_ptr<Map> m_map;
     std::unique_ptr<Player> m_player;
-    Camera m_cam;
 
     SDL_Renderer* const m_renderer;
     ResourceManager& m_res_mng;
+    Camera m_cam;
+    
     Scene m_scene = Scene::MENU;
     uint16_t m_sel_item = 0;
     uint16_t m_sel_difficulty = 0;
