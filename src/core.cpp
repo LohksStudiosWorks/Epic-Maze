@@ -1,12 +1,25 @@
 #include "core.hpp"
 
-constexpr SDL_Point c_default_app_size = {1280, 720};
-constexpr SDL_Point c_target_app_region = {1920, 1080};
-constexpr SDL_WindowFlags c_default_app_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;// | SDL_WINDOW_FULLSCREEN;
+#include <cmath>
+
+#include "defaults.hpp"
 
 Core::Core(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
+    
+#if defined(SDL_PLATFORM_LINUX)
+    if (!SDL_GetEnvironmentVariable(SDL_GetEnvironment(), "SDL_VIDEO_DRIVER")) {
+        SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "x11");
+    }
+    else {
+        SDL_Log("Overwrite of environment variable SDL_VIDEO_DRIVER detected. Note: Wayland may cause memory leaks, so take care!");
+    }
+#endif
+#if defined(SDL_PLATFORM_ANDROID)
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+#endif
+
     SDL_Log("Initializing video, audio, and events...");
     SDL_Init(SDL_INIT_VIDEO); //  | SDL_INIT_AUDIO | SDL_INIT_EVENTS
 
@@ -19,12 +32,19 @@ Core::Core(int argc, char *argv[]) {
     SDL_CreateWindowAndRenderer("Epic Maze v" GAME_VERSION, c_default_app_size.x, c_default_app_size.y, c_default_app_flags, &m_sdl.window, &m_sdl.renderer);
     SDL_SetRenderLogicalPresentation(m_sdl.renderer, c_target_app_region.x, c_target_app_region.y, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
-    m_res_mgr = std::make_shared<ResourceManager>(m_sdl.renderer);
-    m_res_mgr->load_scene_assets();
+    m_res_mgr = std::make_unique<ResourceManager>(m_sdl.renderer);
+    m_game = std::make_unique<Game>(*m_res_mgr, m_sdl.renderer);
+
+    SDL_AddTimer(50, [](void* g, SDL_TimerID tid, Uint32 interval){ 
+        (void)tid;
+        ((Game*)g)->tick(interval);
+        return interval;
+    }, (void*)m_game.get());
 }
 
 Core::~Core() {
-
+    m_game.reset();
+    m_res_mgr.reset();
 }
 
 SDL_AppResult Core::handle(SDL_Event& event) {
@@ -44,46 +64,15 @@ SDL_AppResult Core::handle(SDL_Event& event) {
         break;
     }
 
-    return SDL_APP_CONTINUE;
+    return m_game->interact(event);
 }
 
 SDL_AppResult Core::draw() {
     SDL_RenderClear(m_sdl.renderer);
 
-    m_res_mgr->draw_menu_block_background();
-
-    const auto draw_tex_at = [this](const ResourceManager::TextureId tid, const float x, const float y) {
-        auto* tex = m_res_mgr->get_texture(tid);
-        SDL_FRect dest;
-        SDL_GetTextureSize(tex, &dest.w, &dest.h);
-        dest.x = x;
-        dest.y = y;
-        SDL_RenderTexture(m_sdl.renderer, tex, nullptr, &dest);
-    };
-
-    switch(m_res_mgr->get_scene()) {
-    case ResourceManager::Scene::MENU:
-        draw_tex_at(ResourceManager::TextureId::INTRO, 417.0f, 162.0f);
-        break;
-    case ResourceManager::Scene::PLAY:
-
-        break;
-    case ResourceManager::Scene::INSTR:
-
-        break;
-    case ResourceManager::Scene::RECORDS:
-
-        break;
-    case ResourceManager::Scene::GAMING:
-
-        break;
-    case ResourceManager::Scene::PAUSE:
-
-        break;
-    }
-
-
-    m_res_mgr->draw_vignette();
+    m_game->draw();
+   
+    SDL_RenderTexture(m_sdl.renderer, m_res_mgr->get_texture(ResourceManager::TextureId::VIGNETTE), nullptr, nullptr);
     SDL_RenderPresent(m_sdl.renderer);
 
     return SDL_APP_CONTINUE;

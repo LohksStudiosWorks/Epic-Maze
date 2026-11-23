@@ -20,7 +20,7 @@ sdl3plus_add_game(${PROJECT_NAME}
         resources/icon.png
 )
 
-#sdl3plus_add_android_key_file(${PROJECT_NAME} resources/release-key.jks)
+sdl3plus_add_android_key_file(${PROJECT_NAME} resources/release-key.jks)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/include

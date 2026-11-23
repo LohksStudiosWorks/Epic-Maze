@@ -69,36 +69,14 @@ public:
         VIGNETTE
     };
 
-    enum class Scene {
-        MENU,
-        PLAY,
-        INSTR,
-        RECORDS,
-        GAMING,
-        PAUSE
-    };
-
     ResourceManager(SDL_Renderer* renderer);
 
-    void set_scene(Scene new_scene);
-    const Scene& get_scene() const;
-
-    bool load_scene_assets();
-
     SDL_Texture* get_texture(TextureId id) const;
-    // tools
-    bool draw_menu_block_background();
-    bool draw_menu_option(size_t opt);
-    bool draw_start_option(size_t opt);
-    void draw_vignette();
 private:
     const_mem_resource<TTF_Font> m_font;
     TTF_TextEngine* m_text_eng;
     TTF_Text* m_text;
     SDL_Renderer* m_renderer_ref;
-    const_mem_resource<SDL_Texture> m_vignette;
 
-    std::unordered_map<TextureId, const_mem_resource<SDL_Texture>> m_loaded_textures;
-
-    Scene m_scene = Scene::MENU;
+    const std::unordered_map<TextureId, const_mem_resource<SDL_Texture>> m_loaded_textures;
 };
