@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <format>
 
 #include "defaults.hpp"
 
@@ -63,6 +64,35 @@ void Game::draw() {
         tile_tex_bg(m_res_mng.get_texture(ResourceManager::TextureId::MENU_BLOCK), SDL_GetTicksNS() * 110e-9f);
         draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::INTRO), {417.0f, 162.0f});
         draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::REC_BACK), {0.0f, 0.0f});
+        {
+            const char* title;
+            float off_x = 0.0f;
+            constexpr float off_y = 370.0f;
+
+            switch(m_sel_item) {
+            case 0:
+                title = "SCORES - EASY";
+                off_x = 690.0f;
+                break;
+            case 1:
+                title = "SCORES - NORMAL";
+                off_x = 620.0f;
+                break;
+            case 2:
+                title = "SCORES - UNBELIEVABLE";
+                off_x = 530.0f;
+                break;
+            }
+
+            m_res_mng.draw_text(title, off_x, off_y, {255,255,255,255});
+
+            auto scores = m_score.get_scores(m_sel_item);
+            for(size_t p = 0; p < 7; ++p) {
+                const uint64_t val = p < scores.size() ? scores[p] : 0;
+                m_res_mng.draw_text(std::format("{}⁰: {}", p + 1, val), 430.0f, 27.0f + off_y + 64.0f * (p + 1), {255,255,255,255});
+            }
+        }
+
         break;
     case Scene::PAUSE:
         [[ fallthrough ]];
@@ -113,17 +143,28 @@ void Game::draw() {
         // --- From here no fancy zoom:
         m_cam.undo_zoom();
 
-        if (m_flashlight) {
+        {
+            uint64_t cpy = m_elapsed_time / 100ull;
+            char time_str[16];
+            unsigned c = static_cast<unsigned>(cpy % 10);
+            cpy /= 10;
+            unsigned sec = static_cast<unsigned>(cpy % 60);
+            cpy /= 60;
+            unsigned min = static_cast<unsigned>(cpy % 60);
+            cpy /= 60;
 
-            m_flashlight->refresh();
-            m_flashlight->draw();
+            snprintf(time_str, 16, "%02u:%02u:%02u.%u", static_cast<unsigned>(cpy), min, sec, c);
+
+            m_res_mng.draw_text(time_str, c_target_app_region.x - 422.0f, 22.0f, {  0,  0,  0,255});
+            m_res_mng.draw_text(time_str, c_target_app_region.x - 420.0f, 20.0f, {255,255,255,255});
         }
 
-        if (m_touch.moved()) {
-            draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::TOUCH_OVERLAY), {
-                m_touch.get_origin_x() * c_levels_zoom[m_sel_difficulty % 3] - c_touch_size.x * 0.5f,
-                m_touch.get_origin_y() * c_levels_zoom[m_sel_difficulty % 3] - c_touch_size.y * 0.5f
-            }, c_touch_size);
+        if (m_flashlight) {
+            if (m_refresh_flashlight) {
+                m_flashlight->refresh();
+                m_refresh_flashlight = false;
+            }   
+            m_flashlight->draw();
         }
         
         // Add PAUSE on top
@@ -164,13 +205,16 @@ SDL_AppResult Game::interact(SDL_Event& event) {
                 m_sel_item = 0;
                 m_scene = Scene::PLAY;
                 break;
-            case 1:                    
+            case 1:
+                m_sel_item = 0;
                 m_scene = Scene::INSTR;
                 break;
             case 2:
+                m_sel_item = 0;
                 m_scene = Scene::RECORDS;
                 break;
             default:
+                m_sel_item = 0;
                 m_scene = Scene::EXIT;
                 break;
             }
@@ -195,6 +239,7 @@ SDL_AppResult Game::interact(SDL_Event& event) {
                 m_map = std::make_shared<Map>(150, 80);
                 m_cam.set_zoom(c_levels_zoom[2]);
                 m_flashlight = std::make_unique<Flashlight>(m_player, m_map, m_cam, m_renderer);
+                m_flashlight->refresh();
                 break;
             }
 
@@ -298,7 +343,20 @@ SDL_AppResult Game::interact(SDL_Event& event) {
     case Scene::RECORDS:
         switch(event.type) {
         case SDL_EVENT_KEY_DOWN:
-            advance_menu();
+            if (event.key.scancode == SDL_SCANCODE_W || event.key.scancode == SDL_SCANCODE_A || event.key.scancode == SDL_SCANCODE_UP) {
+                m_sel_item = (m_sel_item + 2) % 3;
+            } else if (event.key.scancode == SDL_SCANCODE_S || event.key.scancode == SDL_SCANCODE_D || event.key.scancode == SDL_SCANCODE_DOWN) {
+                m_sel_item = (m_sel_item + 1) % 3;
+            } else  {
+                advance_menu();
+            }
+            break;
+        case SDL_EVENT_MOUSE_WHEEL:
+            if (event.wheel.integer_y < 0) {
+                m_sel_item = (m_sel_item + 1) % 3;
+            } else {
+                m_sel_item = (m_sel_item + 2) % 3;
+            }
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
             advance_menu();
@@ -362,7 +420,6 @@ SDL_AppResult Game::interact(SDL_Event& event) {
     return m_scene == Scene::EXIT ? SDL_APP_SUCCESS : SDL_APP_CONTINUE;
 }
 
-
 void Game::tick(Uint32 elapsed) {
     if (m_scene != Scene::GAMING) return;
 
@@ -399,6 +456,12 @@ void Game::tick(Uint32 elapsed) {
     const int py = static_cast<int>(std::floor((m_player->get_y() + player_size_fixed.y * 0.5f) / block_size_fixed.y));
     const SDL_FRect p_rect = m_player->get_rect();
 
+    if (m_map->read(px, py) == Map::BlockId::END) {
+        m_score.add_score(m_sel_difficulty, 1'000'000'000'000'000 / (m_elapsed_time + 1));
+        m_score.save();
+        m_scene = Scene::RECORDS;
+    }
+
     for(int x = px - 1; x <= px + 1; ++x) {
         for(int y = py - 1; y <= py + 1; ++y) {
             if (m_map->read(x, y) != Map::BlockId::SOLID)
@@ -422,6 +485,16 @@ void Game::tick(Uint32 elapsed) {
     m_cam.tick();
 }
 
+void Game::lazy_draw() {
+
+    switch(m_scene) {
+    case Scene::GAMING:
+        m_refresh_flashlight = true;
+        break;
+    default:
+        break;
+    }
+}
 
 void Game::draw_tex_at(SDL_Texture* tex, const SDL_FPoint pos) {
     SDL_FRect dest;

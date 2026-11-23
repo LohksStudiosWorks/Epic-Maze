@@ -9,7 +9,7 @@ static const_mem_resource<TTF_Font> load_font_from_mem(const b::EmbedInternal::E
 static const_mem_resource<SDL_Texture> load_texture_from_mem(SDL_Renderer* renderer, const b::EmbedInternal::EmbeddedFile& embed);
 
 ResourceManager::ResourceManager(SDL_Renderer* renderer) :
-    m_font(load_font_from_mem(b::embed<"resources/DejaVuSans.ttf">(), 24.0f)),
+    m_font(load_font_from_mem(b::embed<"resources/DejaVuSans.ttf">(), 69.0f)),
     m_text_eng(TTF_CreateRendererTextEngine(renderer)),
     m_text(TTF_CreateText(m_text_eng, m_font.res, "Test", 0)),
     m_renderer_ref(renderer),
@@ -23,7 +23,12 @@ SDL_Texture* ResourceManager::get_texture(TextureId id) const {
     return tex->second.res;
 }
 
-
+void ResourceManager::draw_text(const std::string_view& text, const float x, const float y, const SDL_Color color) {
+    if (!m_text) return;
+    TTF_SetTextString(m_text, text.data(), text.size());
+    TTF_SetTextColor(m_text, color.r, color.g, color.b, color.a);
+    TTF_DrawRendererText(m_text, x, y);
+}
 
 std::unordered_map<ResourceManager::TextureId, const_mem_resource<SDL_Texture>> build_const_mem(SDL_Renderer* renderer) {
     std::unordered_map<ResourceManager::TextureId, const_mem_resource<SDL_Texture>> texmap;
@@ -80,7 +85,6 @@ std::unordered_map<ResourceManager::TextureId, const_mem_resource<SDL_Texture>> 
     texmap[ResourceManager::TextureId::REC_BACK] = load_texture_from_mem(renderer, b::embed<"resources/rec_back.png">());
     texmap[ResourceManager::TextureId::SAVING_SCORE] = load_texture_from_mem(renderer, b::embed<"resources/saving_score.png">());
     texmap[ResourceManager::TextureId::VIGNETTE] = load_texture_from_mem(renderer, b::embed<"resources/vignette.png">());
-    texmap[ResourceManager::TextureId::TOUCH_OVERLAY] = load_texture_from_mem(renderer, b::embed<"resources/android_touch.png">());
 
     return texmap;
 }

@@ -45,6 +45,11 @@ Core::Core(int argc, char *argv[]) {
         ((Game*)g)->tick(interval);
         return interval;
     }, (void*)m_game.get());
+    SDL_AddTimer(50, [](void* g, SDL_TimerID tid, Uint32 interval){ 
+        (void)tid;
+        ((Game*)g)->lazy_draw();
+        return interval;
+    }, (void*)m_game.get());
 }
 
 Core::~Core() {

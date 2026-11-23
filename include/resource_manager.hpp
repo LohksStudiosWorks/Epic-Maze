@@ -67,13 +67,13 @@ public:
         PERSON,
         REC_BACK,
         SAVING_SCORE,
-        VIGNETTE,
-        TOUCH_OVERLAY
+        VIGNETTE
     };
 
     ResourceManager(SDL_Renderer* renderer);
 
     SDL_Texture* get_texture(TextureId id) const;
+    void draw_text(const std::string_view& text, const float x, const float y, const SDL_Color color);
 private:
     const_mem_resource<TTF_Font> m_font;
     TTF_TextEngine* m_text_eng;
