@@ -6,6 +6,7 @@
 
 #include <unordered_map>
 #include <memory>
+#include <string_view>
 
 template<typename T>
 struct const_mem_resource {
