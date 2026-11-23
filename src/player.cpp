@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdio>
 
+#include "defaults.hpp"
+
 Player::Player(const float x, const float y) :
     m_desired({x, y})
 {}
@@ -53,17 +55,18 @@ float Player::get_y() const {
     return m_desired.y;
 }
 
-void Player::cancel() {
+void Player::cancel(int off_x, int off_y) {
     const float dir_x = m_desired.x - m_draw.x;
     const float dir_y = m_desired.y - m_draw.y;
 
-    if (m_accel.x * dir_x >= 0.0f) m_accel.x = 0.0f;
-    if (m_accel.y * dir_y >= 0.0f) m_accel.y = 0.0f;
+    if (off_x != 0) m_accel.x = 1.0f * off_x;
+    else if (m_accel.x * dir_x >= 0.0f) m_accel.x = 0.0f;
+    if (off_y != 0) m_accel.y = 1.0f * off_y;
+    else if (m_accel.y * dir_y >= 0.0f) m_accel.y = 0.0f;
 
     m_desired.x = m_draw.x;
     m_desired.y = m_draw.y;
 }
-
 
 void Player::tick() {
     constexpr float momentum = 0.9f;
@@ -81,4 +84,13 @@ void Player::tick() {
     m_target_rot = std::fmod(m_target_rot + 360.0f, 360.0f);
 
     m_interp.set();
+}
+
+SDL_FRect Player::get_rect() const {
+    return SDL_FRect{
+        .x = m_desired.x,
+        .y = m_desired.y,
+        .w = player_size_fixed.x,
+        .h = player_size_fixed.y
+    };
 }

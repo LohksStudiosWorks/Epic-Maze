@@ -17,7 +17,7 @@ public:
 private:
     void draw_tex_at(SDL_Texture* tex, const SDL_FPoint pos);
     void draw_tex_at(SDL_Texture* tex, const SDL_FPoint pos, const SDL_FPoint force_size);
-    void draw_tex_at(SDL_Texture* tex, const SDL_FPoint pos, const float rot);
+    void draw_tex_at(SDL_Texture* tex, const SDL_FPoint pos, const float rot, const SDL_FPoint force_size);
     void tile_tex_bg(SDL_Texture* tex, const float off);
 
     enum class Scene {

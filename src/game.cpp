@@ -77,8 +77,7 @@ void Game::draw() {
         auto* block_end_tex = m_res_mng.get_texture(ResourceManager::TextureId::BLOCK_END);
 
         const auto area = m_cam.calculated_limits();
-        SDL_Log("LIM: %i %i %i %i\n", area.x, area.y, area.x + area.w, area.x + area.h);
-        
+
         for(int x = area.x; x < area.x + area.w; ++x) {
             for(int y = area.y; y < area.y + area.h; ++y) {
                 switch(m_map->read(x, y)) {
@@ -99,9 +98,9 @@ void Game::draw() {
             const size_t idx = static_cast<size_t>(SDL_GetTicksNS() * 2e-9f) % 2;
             const ResourceManager::TextureId id = static_cast<ResourceManager::TextureId>(static_cast<size_t>(ResourceManager::TextureId::PERSON_F01) + idx);
 
-            draw_tex_at(m_res_mng.get_texture(id), m_cam.transl({m_player->draw_get_x(), m_player->draw_get_y()}), m_player->draw_get_rot());
+            draw_tex_at(m_res_mng.get_texture(id), m_cam.transl({m_player->draw_get_x(), m_player->draw_get_y()}), m_player->draw_get_rot(), player_size_fixed);
         } else {
-            draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::PERSON), m_cam.transl({m_player->draw_get_x(), m_player->draw_get_y()}), m_player->draw_get_rot());            
+            draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::PERSON), m_cam.transl({m_player->draw_get_x(), m_player->draw_get_y()}), m_player->draw_get_rot(), player_size_fixed);            
         }
     }
         break;
@@ -332,8 +331,36 @@ void Game::tick(Uint32 elapsed) {
     m_player->move(dir_x, dir_y);
     m_player->tick();
 
-    if (m_player->get_x() > 10000.0f || m_player->get_y() > 5000.0f)
-        m_player->cancel();
+    const int px = static_cast<int>(std::floor((m_player->get_x() + player_size_fixed.x * 0.5f) / block_size_fixed.x));
+    const int py = static_cast<int>(std::floor((m_player->get_y() + player_size_fixed.y * 0.5f) / block_size_fixed.y));
+    const SDL_FRect p_rect = m_player->get_rect();
+
+    int was_hit_vert = 0;
+    int was_hit_horiz = 0;
+
+    for(int x = px - 1; x <= px + 1; ++x) {
+        for(int y = py - 1; y <= py + 1; ++y) {
+            if (m_map->read(x, y) != Map::BlockId::SOLID)
+                continue;
+
+            const SDL_FRect transl{
+                .x = x * block_size_fixed.x,
+                .y = y * block_size_fixed.y,
+                .w = block_size_fixed.x,
+                .h = block_size_fixed.y
+            };
+
+            if (SDL_HasRectIntersectionFloat(&p_rect, &transl)) {
+                was_hit_horiz = (y - py) == 0 ? (px - x) : was_hit_horiz;
+                was_hit_vert  = (x - px) == 0 ? (py - y) : was_hit_vert;
+            }
+        }
+    }
+
+    if (was_hit_vert != 0 || was_hit_horiz != 0 || m_player->get_x() > 10000.0f || m_player->get_y() > 5000.0f) {
+        SDL_Log("%i %i\n", was_hit_horiz, was_hit_vert);
+        m_player->cancel(was_hit_horiz, was_hit_vert);
+    }
 
     m_cam.follow(m_player->get_x(), m_player->get_y());
     m_cam.tick();
@@ -357,11 +384,13 @@ void Game::draw_tex_at(SDL_Texture* tex, const SDL_FPoint pos, const SDL_FPoint 
     SDL_RenderTexture(m_renderer, tex, nullptr, &dest);
 }
 
-void Game::draw_tex_at(SDL_Texture* tex, const SDL_FPoint pos, const float rot) {
-    SDL_FRect dest;
-    SDL_GetTextureSize(tex, &dest.w, &dest.h);
-    dest.x = pos.x;
-    dest.y = pos.y;
+void Game::draw_tex_at(SDL_Texture* tex, const SDL_FPoint pos, const float rot, const SDL_FPoint force_size) {
+    SDL_FRect dest{
+        .x = pos.x,
+        .y = pos.y,
+        .w = force_size.x,
+        .h = force_size.y
+    };
     SDL_RenderTextureRotated(m_renderer, tex, nullptr, &dest, rot, nullptr, SDL_FLIP_NONE);
 }
 

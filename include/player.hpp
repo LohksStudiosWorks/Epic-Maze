@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SDL3/SDL.h>
+
 #include "interpolator.hpp"
 
 class Player {
@@ -15,9 +17,11 @@ public:
 
     float get_x() const;
     float get_y() const;
-    void cancel();
+    void cancel(int off_x, int off_y);
 
     void tick();
+
+    SDL_FRect get_rect() const;
 private:
     struct pos { float x{}, y{}; };
 

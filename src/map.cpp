@@ -6,10 +6,10 @@ Map::Map(int x, int y)
     : m_w(x), m_h(y), m_map(std::make_unique<BlockId[]>((x < 0 || y < 0) ? 1 : x * y))
 {
     if (x < 0 || y < 0) throw std::invalid_argument("Map size invalid!");
-    
+
     for (int xx = 0; xx < m_w; ++xx) {
         for (int yy = 0; yy < m_h; ++yy) {
-            set(xx, yy, ((xx + yy) % 2 == 0) ? Map::BlockId::SOLID : Map::BlockId::AIR);
+            set(xx, yy, ((xx + yy) % 2 == 0 && (xx % 2 != 0 && yy % 2 != 0)) ? Map::BlockId::SOLID : Map::BlockId::AIR);
         }
     }
 }

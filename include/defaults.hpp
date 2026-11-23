@@ -13,6 +13,7 @@ constexpr SDL_WindowFlags c_default_app_flags = SDL_WINDOW_RESIZABLE | SDL_WINDO
 
 // Game things
 constexpr SDL_FPoint block_size_fixed = { 192.0f, 192.0f };
+constexpr SDL_FPoint player_size_fixed = { 48.0f, 48.0f };
 constexpr SDL_Point max_area_visible = { 
     static_cast<int>(2.5f + c_target_app_region.x / block_size_fixed.x),
     static_cast<int>(2.5f + c_target_app_region.y / block_size_fixed.y)
