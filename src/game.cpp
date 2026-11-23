@@ -89,7 +89,9 @@ void Game::draw() {
             auto scores = m_score.get_scores(m_sel_item);
             for(size_t p = 0; p < 7; ++p) {
                 const uint64_t val = p < scores.size() ? scores[p] : 0;
-                m_res_mng.draw_text(std::format("{}⁰: {}", p + 1, val), 430.0f, 27.0f + off_y + 64.0f * (p + 1), {255,255,255,255});
+                m_res_mng.draw_text(std::format("{}⁰: {}{}", p + 1, val, m_last_score == val ? '*' : ' '), 430.0f, 27.0f + off_y + 64.0f * (p + 1),
+                    {255,255,static_cast<Uint8>((m_last_score == val) ? 0 : 255),255}
+                );
             }
         }
 
@@ -457,8 +459,9 @@ void Game::tick(Uint32 elapsed) {
     const SDL_FRect p_rect = m_player->get_rect();
 
     if (m_map->read(px, py) == Map::BlockId::END) {
-        m_score.add_score(m_sel_difficulty, 1'000'000'000'000'000 / (m_elapsed_time + 1));
+        m_score.add_score(m_sel_difficulty, (m_last_score = 1'000'000'000'000'000 / (m_elapsed_time + 1)));
         m_score.save();
+        m_sel_item = m_sel_difficulty;
         m_scene = Scene::RECORDS;
     }
 
