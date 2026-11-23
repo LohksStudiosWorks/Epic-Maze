@@ -7,6 +7,7 @@
 #include "player.hpp"
 #include "camera.hpp"
 #include "flashlight.hpp"
+#include "drag_move.hpp"
 
 class Game {
 public:
@@ -39,6 +40,7 @@ private:
     SDL_Renderer* const m_renderer;
     ResourceManager& m_res_mng;
     Camera m_cam;
+    DragMove m_touch;
 
     Scene m_scene = Scene::MENU;
     uint16_t m_sel_item = 0;

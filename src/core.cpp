@@ -18,6 +18,7 @@ Core::Core(int argc, char *argv[]) {
 #endif
 #if defined(SDL_PLATFORM_ANDROID)
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+    SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1");
 #endif
 
     SDL_Log("Initializing video, audio, and events...");
@@ -31,6 +32,10 @@ Core::Core(int argc, char *argv[]) {
     SDL_SetAppMetadata("Epic Maze v" GAME_VERSION, GAME_VERSION, "com.lsw.epicmaze");
     SDL_CreateWindowAndRenderer("Epic Maze v" GAME_VERSION, c_default_app_size.x, c_default_app_size.y, c_default_app_flags, &m_sdl.window, &m_sdl.renderer);
     SDL_SetRenderLogicalPresentation(m_sdl.renderer, c_target_app_region.x, c_target_app_region.y, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
+    if (!SDL_SetRenderVSync(m_sdl.renderer, 1)) {
+        SDL_Log("VSync cannot be enabled: %s", SDL_GetError());
+    }
 
     m_res_mgr = std::make_unique<ResourceManager>(m_sdl.renderer);
     m_game = std::make_unique<Game>(*m_res_mgr, m_sdl.renderer);

@@ -1,6 +1,7 @@
 #include "game.hpp"
 
 #include <cmath>
+#include <algorithm>
 
 #include "defaults.hpp"
 
@@ -63,6 +64,8 @@ void Game::draw() {
         draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::INTRO), {417.0f, 162.0f});
         draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::REC_BACK), {0.0f, 0.0f});
         break;
+    case Scene::PAUSE:
+        [[ fallthrough ]];
     case Scene::GAMING:
     {
         if (!m_player) {
@@ -74,6 +77,8 @@ void Game::draw() {
             break;
         }
         
+        m_cam.redo_zoom();
+
         auto* block_tex = m_res_mng.get_texture(ResourceManager::TextureId::BLOCK);
         auto* block_end_tex = m_res_mng.get_texture(ResourceManager::TextureId::BLOCK_END);
         auto* block_dirt_tex = m_res_mng.get_texture(ResourceManager::TextureId::DIRT);
@@ -105,33 +110,42 @@ void Game::draw() {
             draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::PERSON), m_cam.transl({m_player->draw_get_x(), m_player->draw_get_y()}), m_player->draw_get_rot(), player_size_fixed);            
         }
 
+        // --- From here no fancy zoom:
+        m_cam.undo_zoom();
+
         if (m_flashlight) {
-            m_cam.undo_zoom();
 
             m_flashlight->refresh();
             m_flashlight->draw();
+        }
 
-            m_cam.redo_zoom();
+        if (m_touch.moved()) {
+            draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::TOUCH_OVERLAY), {
+                m_touch.get_origin_x() * c_levels_zoom[m_sel_difficulty % 3] - c_touch_size.x * 0.5f,
+                m_touch.get_origin_y() * c_levels_zoom[m_sel_difficulty % 3] - c_touch_size.y * 0.5f
+            }, c_touch_size);
+        }
+        
+        // Add PAUSE on top
+        if (m_scene == Scene::PAUSE) {
+            switch(m_sel_item) {
+            case 0:
+                draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::PAUSE_CONTINUE), {0.0f, 0.0f});
+                break;
+            case 1:
+                draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::PAUSE_EXIT), {0.0f, 0.0f});
+                break;
+            default:
+                m_sel_item = 0;
+                break;
+            }
+            {
+                const size_t idx = static_cast<size_t>(SDL_GetTicksNS() * 24e-9f) % 30;
+                const ResourceManager::TextureId id = static_cast<ResourceManager::TextureId>(static_cast<size_t>(ResourceManager::TextureId::PAUSE_00) + idx);
+                draw_tex_at(m_res_mng.get_texture(id), {531.0f, 147.0f});
+            }
         }
     }
-        break;
-    case Scene::PAUSE:
-        switch(m_sel_item) {
-        case 0:
-            draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::PAUSE_CONTINUE), {0.0f, 0.0f});
-            break;
-        case 1:
-            draw_tex_at(m_res_mng.get_texture(ResourceManager::TextureId::PAUSE_EXIT), {0.0f, 0.0f});
-            break;
-        default:
-            m_sel_item = 0;
-            break;
-        }
-        {
-            const size_t idx = static_cast<size_t>(SDL_GetTicksNS() * 24e-9f) % 30;
-            const ResourceManager::TextureId id = static_cast<ResourceManager::TextureId>(static_cast<size_t>(ResourceManager::TextureId::PAUSE_00) + idx);
-            draw_tex_at(m_res_mng.get_texture(id), {531.0f, 147.0f});
-        }
         break;
     default:
         break;
@@ -171,15 +185,15 @@ SDL_AppResult Game::interact(SDL_Event& event) {
             switch(m_sel_difficulty) {
             case 0:
                 m_map = std::make_shared<Map>(35, 22);
-                m_cam.set_zoom(0.5f);
+                m_cam.set_zoom(c_levels_zoom[0]);
                 break;
             case 1:
                 m_map = std::make_shared<Map>(100, 35);
-                m_cam.set_zoom(1.0f);
+                m_cam.set_zoom(c_levels_zoom[1]);
                 break;
             case 2:
                 m_map = std::make_shared<Map>(150, 80);
-                m_cam.set_zoom(1.4f);
+                m_cam.set_zoom(c_levels_zoom[2]);
                 m_flashlight = std::make_unique<Flashlight>(m_player, m_map, m_cam, m_renderer);
                 break;
             }
@@ -190,14 +204,12 @@ SDL_AppResult Game::interact(SDL_Event& event) {
             switch(m_sel_item) {
             case 1:
                 m_scene = Scene::MENU;
-                m_cam.undo_zoom();
                 m_flashlight.reset();
                 m_sel_item = 0;
                 break;
             default: // case 0
                 m_sel_item = 0;
                 m_scene = Scene::GAMING;
-                m_cam.redo_zoom();
                 break;
             }
         break;
@@ -232,7 +244,7 @@ SDL_AppResult Game::interact(SDL_Event& event) {
                 m_sel_item = (m_sel_item + 1) % 4;
             } else if (event.key.scancode == SDL_SCANCODE_KP_ENTER || event.key.scancode == SDL_SCANCODE_RETURN) {
                 advance_menu();
-            } else if (event.key.scancode == SDL_SCANCODE_ESCAPE) {
+            } else if (event.key.scancode == SDL_SCANCODE_ESCAPE || event.key.scancode == SDL_SCANCODE_AC_BACK) {
                 m_scene = Scene::EXIT;
             }
             break;
@@ -260,7 +272,7 @@ SDL_AppResult Game::interact(SDL_Event& event) {
                 m_sel_item = (m_sel_item + 1) % 3;
             } else if (event.key.scancode == SDL_SCANCODE_KP_ENTER || event.key.scancode == SDL_SCANCODE_RETURN) {
                 advance_menu();
-            } else if (event.key.scancode == SDL_SCANCODE_ESCAPE) {
+            } else if (event.key.scancode == SDL_SCANCODE_ESCAPE || event.key.scancode == SDL_SCANCODE_AC_BACK) {
                 m_scene = Scene::MENU;
             }
             break;
@@ -298,11 +310,21 @@ SDL_AppResult Game::interact(SDL_Event& event) {
     case Scene::GAMING:
         switch(event.type) {
         case SDL_EVENT_KEY_DOWN:
-            if (event.key.scancode == SDL_SCANCODE_ESCAPE) {
+            if (event.key.scancode == SDL_SCANCODE_ESCAPE || event.key.scancode == SDL_SCANCODE_AC_BACK) {
                 m_scene = Scene::PAUSE;
-                m_cam.undo_zoom();
-                m_flashlight.reset();
                 m_sel_item = 0;
+            }
+            break;
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+            [[ fallthrough ]];
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            if (event.button.button == 1) {
+                m_touch.set(event.motion.x, event.motion.y);
+            }
+            break;
+        case SDL_EVENT_MOUSE_MOTION:
+            if (event.button.button == 1) {
+                m_touch.move(event.motion.x, event.motion.y);
             }
             break;
         default:
@@ -322,9 +344,8 @@ SDL_AppResult Game::interact(SDL_Event& event) {
                 m_sel_item = !m_sel_item;
             } else if (event.key.scancode == SDL_SCANCODE_KP_ENTER || event.key.scancode == SDL_SCANCODE_RETURN) {
                 advance_menu();
-            } else if (event.key.scancode == SDL_SCANCODE_ESCAPE) {
+            } else if (event.key.scancode == SDL_SCANCODE_ESCAPE || event.key.scancode == SDL_SCANCODE_AC_BACK) {
                 m_scene = Scene::GAMING;
-                m_cam.redo_zoom();
             }
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -350,18 +371,28 @@ void Game::tick(Uint32 elapsed) {
 
     if (!m_player) return;
 
-    int len;
-    const bool* state = SDL_GetKeyboardState(&len);
+    if (m_touch.moved()) {
+        const float dx = std::clamp(m_touch.get_dx(), -256.0f, 256.0f);
+        const float dy = std::clamp(m_touch.get_dy(), -256.0f, 256.0f);
 
-    if (len < SDL_SCANCODE_W || len < SDL_SCANCODE_S || len < SDL_SCANCODE_A || len < SDL_SCANCODE_D) {
-        SDL_Log("Weird: Keyboard state is too small.\n");
-        return;
+        m_player->move(dx / 256.0f, dy / 256.0f);
+
+    } else { // non "touch"
+
+        int len;
+        const bool* state = SDL_GetKeyboardState(&len);
+
+        if (len < SDL_SCANCODE_W || len < SDL_SCANCODE_S || len < SDL_SCANCODE_A || len < SDL_SCANCODE_D) {
+            SDL_Log("Weird: Keyboard state is too small.\n");
+            return;
+        }
+
+        const float dir_y = static_cast<float>(state[SDL_SCANCODE_S] - state[SDL_SCANCODE_W]);
+        const float dir_x = static_cast<float>(state[SDL_SCANCODE_D] - state[SDL_SCANCODE_A]);
+
+        m_player->move(dir_x, dir_y);
     }
 
-    const int dir_y = state[SDL_SCANCODE_S] - state[SDL_SCANCODE_W];
-    const int dir_x = state[SDL_SCANCODE_D] - state[SDL_SCANCODE_A];
-
-    m_player->move(dir_x, dir_y);
     m_player->tick();
 
     const int px = static_cast<int>(std::floor((m_player->get_x() + player_size_fixed.x * 0.5f) / block_size_fixed.x));

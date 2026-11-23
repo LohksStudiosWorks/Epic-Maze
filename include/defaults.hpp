@@ -21,3 +21,11 @@ constexpr SDL_Point max_area_visible = {
 
 constexpr SDL_Point c_shadows_orig_resolution = {1920, 1080};
 constexpr SDL_Point c_shadows_resolution = {48 * 8, 27 * 8};
+
+constexpr SDL_FPoint c_touch_size = {256.0f, 256.0f};
+
+constexpr float c_levels_zoom[3] = {
+    0.5f,
+    1.0f,
+    1.4f
+};

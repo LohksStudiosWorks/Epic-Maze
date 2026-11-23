@@ -9,7 +9,7 @@ Player::Player(const float x, const float y) :
     m_desired({x, y})
 {}
 
-void Player::move(int dir_x, int dir_y) {
+void Player::move(float dir_x, float dir_y) {
     constexpr float thrust = 5.0f;
     constexpr float boost = 3.0f;
 

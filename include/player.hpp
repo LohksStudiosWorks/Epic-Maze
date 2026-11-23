@@ -8,7 +8,7 @@ class Player {
 public:
     Player(const float x, const float y);
 
-    void move(int dir_x, int dir_y);
+    void move(float dir_x, float dir_y);
     bool has_moved() const;
 
     float draw_get_x() const;
@@ -17,7 +17,7 @@ public:
 
     float get_x() const;
     float get_y() const;
-    
+
     void cancel();
 
     void tick();

@@ -67,7 +67,8 @@ public:
         PERSON,
         REC_BACK,
         SAVING_SCORE,
-        VIGNETTE
+        VIGNETTE,
+        TOUCH_OVERLAY
     };
 
     ResourceManager(SDL_Renderer* renderer);

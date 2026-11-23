@@ -80,6 +80,7 @@ std::unordered_map<ResourceManager::TextureId, const_mem_resource<SDL_Texture>> 
     texmap[ResourceManager::TextureId::REC_BACK] = load_texture_from_mem(renderer, b::embed<"resources/rec_back.png">());
     texmap[ResourceManager::TextureId::SAVING_SCORE] = load_texture_from_mem(renderer, b::embed<"resources/saving_score.png">());
     texmap[ResourceManager::TextureId::VIGNETTE] = load_texture_from_mem(renderer, b::embed<"resources/vignette.png">());
+    texmap[ResourceManager::TextureId::TOUCH_OVERLAY] = load_texture_from_mem(renderer, b::embed<"resources/android_touch.png">());
 
     return texmap;
 }
