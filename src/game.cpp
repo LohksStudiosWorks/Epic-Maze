@@ -358,8 +358,8 @@ SDL_AppResult Game::interact(SDL_Event& event) {
                 m_sel_item = (m_sel_item + 2) % 3;
             }
             break;
-        case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            advance_menu();
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:            
+            m_sel_item = (m_sel_item + 1) % 3;
             break;
         default:
             break;
