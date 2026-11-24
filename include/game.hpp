@@ -49,6 +49,6 @@ private:
     uint16_t m_sel_item = 0;
     uint16_t m_sel_difficulty = 0;
     uint64_t m_elapsed_time = 0;
-    uint64_t m_last_score = 0;
+    uint64_t m_last_score = static_cast<uint64_t>(-1);
     bool m_refresh_flashlight = false;
 };

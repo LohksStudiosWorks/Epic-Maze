@@ -78,7 +78,7 @@ void Game::draw() {
                 title = "SCORES - NORMAL";
                 off_x = 620.0f;
                 break;
-            case 2:
+            default:
                 title = "SCORES - UNBELIEVABLE";
                 off_x = 530.0f;
                 break;
