@@ -3,7 +3,7 @@ include(FetchContent)
 FetchContent_Declare(
     sdl3_plus
     GIT_REPOSITORY  https://github.com/LohksStudiosWorks/SDL3_plus
-    GIT_TAG         master
+    GIT_TAG         v1.0.1
 )
 
 FetchContent_MakeAvailable(sdl3_plus)
