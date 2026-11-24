@@ -26,6 +26,8 @@ sdl3plus_add_game(${PROJECT_NAME}
         ${MAIN_SOURCES}
     ICON
         resources/icon.png
+    STUDIO
+        lohksstudiosworks
 )
 
 sdl3plus_add_android_key_file(${PROJECT_NAME} resources/release-key.jks)
