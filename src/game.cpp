@@ -204,22 +204,19 @@ SDL_AppResult Game::interact(SDL_Event& event) {
         case Scene::MENU:
             switch(m_sel_item) {
             case 0:
-                m_sel_item = 0;
                 m_scene = Scene::PLAY;
                 break;
             case 1:
-                m_sel_item = 0;
                 m_scene = Scene::INSTR;
                 break;
             case 2:
-                m_sel_item = 0;
                 m_scene = Scene::RECORDS;
                 break;
             default:
-                m_sel_item = 0;
                 m_scene = Scene::EXIT;
                 break;
             }
+            m_sel_item = 0;
         break;
         case Scene::PLAY:
             m_sel_difficulty = m_sel_item;
