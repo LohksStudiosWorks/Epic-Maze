@@ -1,4 +1,4 @@
-name: Build Project
+name: Build
 
 on:
   workflow_dispatch:
@@ -7,49 +7,34 @@ permissions:
   contents: write
 
 jobs:
-  make-libs:
-    name: Building and deploying on ${{ matrix.os }} - ${{ matrix.compiler }}
-    runs-on: ${{ matrix.os }}
-
+  build:
+    name: ${{ matrix.name }}
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - os: ubuntu-26.04
-            compiler: gcc
-            terminal: bash
-            archive_ext: tar.gz
-
+          - os: ubuntu-latest
+            artifact: linux-x86_64
+            name: Ubuntu Latest x64
+          - os: macos-latest
+            artifact: macos-arm64
+            name: macOS Latest ARM64
           - os: windows-latest
-            compiler: msvc
-            terminal: bash
-            archive_ext: zip
+            artifact: windows-x86_64
+            name: Windows Latest x64
 
-          - os: windows-latest
-            compiler: mingw
-            terminal: msys2 {0}
-            archive_ext: zip
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Check out source
+        uses: actions/checkout@v7
 
-      - name: Setup Allegro 5 Deps
-        uses: LunarisLib/actions/InstallAllegroDeps5@revamp
+      - name: Bundle things up!
+        uses: LohksStudiosWorks/SDL3_plus/actions/fullBuild@v1.0.2
         with:
-          compiler: ${{ matrix.compiler }}
-
-      - name: Build & Test
-        uses: LunarisLib/actions/Build@revamp
-        with:
-          compiler: ${{ matrix.compiler }}
-          shell: ${{ matrix.terminal }}
-          install: false
-          upload_executable: true
-          test: false
-            
-#  release:
-#    needs: make-libs
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - name: Make Release
-#        uses: LunarisLib/actions/Release@revamp
+          target_name: EpicMaze
+          keystore_base64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          keystore_password: ${{ secrets.KEYSTORE_PASSWORD }}
+          key_alias: ${{ secrets.KEY_ALIAS }}
+          key_password: ${{ secrets.KEY_PASSWORD }}
+          release_keys_file_path: resources/release-key.jks

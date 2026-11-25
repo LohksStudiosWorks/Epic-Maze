@@ -1,4 +1,4 @@
-__old/
 build/
-dist/
-install/
+_alleg/
+resources/release-key.jks
+build-release/

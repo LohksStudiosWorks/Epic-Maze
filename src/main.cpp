@@ -1,24 +1,25 @@
-#include <allegro5/allegro.h>
-#include <iostream>
+#define SDL_MAIN_USE_CALLBACKS 1
 
-int main(int argc, char **argv) {
-    if (!al_init()) {
-        std::cerr << "Failed to initialize Allegro 5.\n";
-        return -1;
-    }
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 
-    // Create a simple window
-    ALLEGRO_DISPLAY *display = al_create_display(800, 600);
-    if (!display) {
-        std::cerr << "Failed to create display.\n";
-        return -1;
-    }
+#include "core.hpp"
 
-    // Clear to a blue color, wait 2 seconds, and exit
-    al_clear_to_color(al_map_rgb(50, 100, 200));
-    al_flip_display();
-    al_rest(2.0);
+SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
+    Core* core = new Core(argc, argv);
+    *appstate = (void*)core;
+    return SDL_APP_CONTINUE;
+}
 
-    al_destroy_display(display);
-    return 0;
+SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
+    return ((Core*)appstate)->handle(*event);
+}
+
+SDL_AppResult SDL_AppIterate(void *appstate) {
+    return ((Core*)appstate)->draw();
+}
+
+void SDL_AppQuit(void *appstate, SDL_AppResult result) {
+    (void)result;    
+    delete ((Core*)appstate);
 }
